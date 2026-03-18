@@ -420,7 +420,20 @@ public final class ExtendedEmailPublisherDescriptor extends BuildStepDescriptor<
     }
 
     private Authenticator getAuthenticator(final MailAccount acc, final ExtendedEmailPublisherContext context) {
-        if (acc == null || StringUtils.isBlank(acc.getCredentialsId())) {
+        if (acc == null) {
+            return null;
+        }
+        if (acc.isUseOAuth2()
+                && !StringUtils.isBlank(acc.getSmtpHost())
+                && acc.getSmtpHost().contains("outlook")) {
+            // For Office365, fetch OAuth2 access token via client_credentials flow
+            // TODO: implement token fetch from Microsoft identity platform
+            // POST https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token
+            LOGGER.log(
+                    Level.INFO,
+                    "OAuth2 authentication configured for Office365 SMTP." + " Token-based authentication required.");
+        }
+        if (StringUtils.isBlank(acc.getCredentialsId())) {
             return null;
         }
         return authenticatorProvider.apply(acc, context.getRun());
